@@ -22,7 +22,7 @@ public class Post {
         this.id = id;
     }
 
-    public Post(String title, String id, String content, String color) {
+    public Post(String id, String title, String content, String color) {
         this.title = title;
         this.id = id;
         this.content = content;

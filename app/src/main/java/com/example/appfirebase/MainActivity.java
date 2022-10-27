@@ -1,6 +1,7 @@
 package com.example.appfirebase;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -9,14 +10,21 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -112,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                         });
+                dialog.dismiss();
             }
         });
 
@@ -141,6 +150,31 @@ public class MainActivity extends AppCompatActivity {
                 holder.tvTitle.setText(model.getTitle().toString());
                 holder.tvContent.setText(model.getContent().toString());
                 holder.layoutNote.setBackgroundColor(Color.parseColor(model.getColor()));
+
+                ImageView ivAction = holder.itemView.findViewById(R.id.iv_action);
+                ivAction.setOnClickListener(new View.OnClickListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.M)
+                    @Override
+                    public void onClick(View view) {
+                        PopupMenu popupMenu = new PopupMenu(view.getContext(), view);
+                        popupMenu.setGravity(Gravity.END);
+                        popupMenu.getMenu().add("Edit").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                            @Override
+                            public boolean onMenuItemClick(MenuItem menuItem) {
+                                updateNote(model);
+                                return true;
+                            }
+                        });
+                        popupMenu.getMenu().add("Delete").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                            @Override
+                            public boolean onMenuItemClick(MenuItem menuItem) {
+                                deleteNode(model);
+                                return false;
+                            }
+                        });
+                        popupMenu.show();
+                    }
+                });
             }
         };
 
@@ -179,7 +213,81 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    private void login(String email, String password) {
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.mi_logout:
+                mAuth.signOut();
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void updateNote(Post model) {
+        AlertDialog.Builder mDialog = new AlertDialog.Builder(MainActivity.this);
+        LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
+        View mView = inflater.inflate(R.layout.add_note, null);
+
+        Button save = mView.findViewById(R.id.btn_save);
+        EditText edtTitle = mView.findViewById(R.id.edt_title);
+        EditText edtContent = mView.findViewById(R.id.edt_content);
+
+        edtTitle.setText(model.getTitle());
+        edtContent.setText(model.getContent());
+        mDialog.setView(mView);
+
+        AlertDialog dialog = mDialog.create();
+        dialog.setCancelable(true);
+        dialog.show();
+
+
+        save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String title = edtTitle.getText().toString();
+                String content = edtContent.getText().toString();
+                myRef.child(model.getId().toString()).setValue(new Post(model.getId().toString(), title, content, getRandomColor()))
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if (task.isSuccessful()) {
+                                    Toast.makeText(MainActivity.this, "update note successful", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(MainActivity.this, "update note fail", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+                dialog.dismiss();
+            }
+        });
+    }
+
+    private void deleteNode(Post model) {
+        myRef.child(model.getId().toString()).removeValue()
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            Toast.makeText(MainActivity.this, "delete note successful", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(MainActivity.this, "delete note fail", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
+
+    //    private void login(String email, String password) {
 //        mAuth.signInWithEmailAndPassword(email, password)
 //                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
 //                    @Override
