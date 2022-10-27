@@ -1,6 +1,7 @@
 package com.example.appfirebase;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -13,8 +14,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.appfirebase.model.Post;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
@@ -50,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionButton btnAdd;
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,20 +82,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void addNote() {
-        String id = myRef.push().getKey();
-        String title = "Test";
-        String content = "Test demo";
-        myRef.child(id).setValue(new Post(id, title, content, getRandomColor()))
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if(task.isSuccessful()){
-                            Log.d("DEBUG", "post data successful");
-                        }else {
-                            Log.d("DEBUG", "post data fail");
-                        }
-                    }
-                });
+        AlertDialog.Builder mDialog = new AlertDialog.Builder(this);
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View mView = inflater.inflate(R.layout.add_note, null);
+        mDialog.setView(mView);
+
+        AlertDialog dialog = mDialog.create();
+        dialog.setCancelable(true);
+        dialog.show();
+
+        Button save = mView.findViewById(R.id.btn_save);
+        EditText edtTitle = mView.findViewById(R.id.edt_title);
+        EditText edtContent = mView.findViewById(R.id.edt_content);
+
+        save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String id = myRef.push().getKey();
+                String title = edtTitle.getText().toString();
+                String content = edtContent.getText().toString();
+                myRef.child(id).setValue(new Post(id, title, content, getRandomColor()))
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if (task.isSuccessful()) {
+                                    Toast.makeText(MainActivity.this, "Add note successful", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(MainActivity.this, "Add note fail", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+            }
+        });
+
+
     }
 
     @Override
@@ -125,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
         adapter.startListening();
     }
 
-    private String getRandomColor(){
+    private String getRandomColor() {
         ArrayList<String> colors = new ArrayList<>();
         colors.add("#35ad68");
         colors.add("#c27ba0");
@@ -142,10 +165,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static class PostHolder extends RecyclerView.ViewHolder {
-        public  TextView tvTitle;
-        public  TextView tvContent;
+        public TextView tvTitle;
+        public TextView tvContent;
         public LinearLayout layoutNote;
-
 
 
         public PostHolder(View view) {
